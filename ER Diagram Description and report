@@ -1,0 +1,146 @@
+Project2 - Part1
+
+Extended Entity-Relationship (EER): 
+Strong Entities: - 
+•	MEMBER 
+For this entity we have considered SSN as the Primary Key which is unique for each member. Other attributes of this entity are Name, Campus_Address, Home_Address, Phone_No. There are disjoined entities specialization of Member – Employee and Student. Student has Grace_Period and Borrow_Period. There are disjoined entities specialization of Employee – Staff and Professor. Professor has Grace_Period and Borrow_Period. There are disjoined entities specialization of Staff – chief_librarian, associate_librarian, reference_librarian, checkout_staff, and library_assistant.
+
+•	BOOK 
+For this entity we have considered ISBN as the Primary Key which is unique for each book. Other attributes of this entity are Title, Volume, Author, Language, Edition, Binding, Description, Subject_Area, Book_Type, Availability. Attribute Availability represents if this book is available to be borrowed or not. Book_Type is the type of book like reference book or maps or magazines. There are disjoined entities specialization of Books – Acquire, Lent, Unloanable.
+
+Weak Entities: - 
+•	CARD
+This entity has Card_Id as its primary key. And other attributes are Issue_date, Expiry_date, Photo, Validity. Every card entry should have a corresponding entry in Member table.
+
+•	COPY
+This entity has the records for all the books in the library. Its primary key is Book_Id. And other attributes of this entity are ISBN, Status. Every Copy entry should have a corresponding entry in Book table. The detail description of book is available in Book table and the details about the no. of copies and their status is in Copy Table.
+
+•	VISITOR
+This entity has the records for visits made by a member, his/her relatives, or guests. The attributes of this entity are Visitor’s Name, Pass_Id (Only For Guest), Validity_Date (Pass Validity Date), Check_In, Check_Out. Every visitor will have corresponding entry in Member table. There are disjoined entities specialization of Visitor – Guest and Relative. Visitor_Type will keep track of the disjoined entities. (Self, Guest, Relative),
+
+Relationships: - 
+•	Borrows 
+This is a one-to-many relationship between entities MEMBER and COPIES 1 member can borrow up to 5 copies at any point in time. Due date is derived from Borrow_Period and Issue_Date. Return date is when the book is returned by the member. Grace_Period date is the date calculated based on issue date and Grace_Period. Status is to keep track of the book whether it was returned and still is borrowed. Issued_By is the SSN no of the staff who issued the book to the member.
+
+•	Issued
+This is a one-to-one relationship between entities MEMBER and CARDS. Both the entities are totally participating in this relationship as Cards is weak entity. Every card entry should have a corresponding Member in Member table.
+
+•	Have 
+This is a One-to-many relationship between entities BOOK and COPIES. Both the entities are totally participating in this relationship. Every entry in Copy table should have corresponding entry in the book table.
+
+•	Visits
+Visits have a recursive relation when the member itself is visiting. Visitors is weak entity and Visits ties Visitor and Member entity. As every visitor should have a corresponding member in the MEMBER table. Visitors and Member entities are totally participating in this relationship. 
+
+
+Mapping EER to Relational Schema: 
+From the ER diagram we have recognized following tables after mappings: 
+•	MEMBER 
+This is a strong entity. It has primary key as SSN and other attributes same as that in EER. We have merged all the specialized table into Member table. We took Member_Type attribute to specify Employee or Student. We took Employee_Type attribute to specify Staff or Professor. We took Staff_Type to specify chief_librarian, departmental associate_librarian, reference_librarian, checkout_staff, and library_assistant. The attributes of Professor and Student entity are merged as Grace_Period and Borrow_Period attribute. Members can borrow max 5 book at any given point in time. Students can borrow books for 21 days. Students have a Grace Period of 1 week and Professors have a grace period of 2 weeks. Professors can borrow books for 3 months.
+ 
+•	BOOK
+This is a strong entity. It has primary key as ISBN and other attributes same as that in EER. We have merged all the specialized table into Book table. We have taken Status_Type attribute to specify whether Acquire, Lent or Unloanable books. Book_Type to specify whether it’s a reference book or magazine or a Map, etc.
+
+•	COPY 
+This table is directly mapped from the EER diagram. It has primary key as Book_Id and other attributes same as that in EER. We add a foreign key ISBN which refers to the ISBN in BOOK table. Status gives the information about the book Availability. Book_Id is Unique for every book. Each copy of a book will have different Book_Id.
+
+
+•	CARD 
+This table is directly mapped from the EER diagram. It has primary key as Card_Id and other attributes same as that in EER. We add a foreign key M_SSN which refers to the SSN in Member table to remove the weak entity relationship.
+
+•	BORROW 
+This table has primary keys M_SSN, BOOK_ID, ISSUE_DATE and other attributes same as that in EER. We add a foreign key BOOK_ID which refers to the BOOK_ID in COPY table, MSSN which refers to the SSN in MEMBER table and ISSUED_BY which refers to the SSN in MEMBER table which specifies who issued the book. Book_Id uniquely identifies each book in the library thus we can keep track of very loaned book in the library. Due date is derived from the Issue_date and Grace period depending upon whether the member is a Student or a Professor. Return Date is when the member returned the book. The return date can be before or after due date. Status keeps the track of whether the book is returned or not. 
+
+•	VISITS
+This table has primary keys M_SSN, CHECK_IN and other attributes same as that in EER. We add a foreign key M_SSN which refers to the SSN in MEMBER table. To overcome the weak entity, we map every entry to a Member_SSN. We have merged all the Specialization table into Visits table. We have taken Visitor_Type attribute to specify whether Guest or Relative. Every visitor will have a Name. If the visitor is Guest, then he/she will have Visitor_Pass and that pass will be valid for only 1 day, that day is specifies by Validity_Date attribute.
+
+
+
+Create Table Commands:
+
+CREATE TABLE MEMBER
+(
+SSN NUMBER,
+NAME VARCHAR2(50),
+HOME_ADDRESS VARCHAR2(1000),
+CAMPUS_ADDRESS VARCHAR2(1000),
+PHONE_NO VARCHAR2(50),
+MEMBER_TYPE VARCHAR2(50),
+GRACE_PERIOD NUMBER,
+BORROW_PERIOD NUMBER, 
+EMPLOYEE_TYPE VARCHAR(50),
+STAFF_TYPE VARCHAR(50),
+PRIMARY KEY(SSN)
+);
+
+
+CREATE TABLE CARD
+(
+CARD_ID NUMBER,
+PHOTO BLOB,
+ISSUE_DATE DATE,
+EXPIRY_DATE DATE,
+VALIDITY DATE,
+M_SSN NUMBER,
+PRIMARY KEY (CARD_ID),
+FOREIGN KEY (M_SSN) REFERENCES MEMBER(SSN) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE BOOK
+(
+ISBN NUMBER,
+TITLE VARCHAR2(100),
+BINDING VARCHAR2(20),
+LANGUAGE VARCHAR2(100),
+EDITION VARCHAR2(30),
+AUTHOR VARCHAR2(50),
+DESCRIPTION CLOB,
+VOLUME VARCHAR2(30),
+SUBJECT_AREA VARCHAR2(100),
+BOOK_TYPE VARCHAR2(30), /* Map, Reference books, Rare books, Magazines */
+AVAILABILITY CHAR (1) NOT NULL ENABLE CHECK (AVAILABILITY IN ('Y', 'N')),
+STATUS_TYPE VARCHAR2(30), /* Lent, Unloanable, Acquire */
+PRIMARY KEY(ISBN)
+);
+
+CREATE TABLE COPY 
+( 
+BOOK_ID NUMBER, 
+ISBN NUMBER NOT NULL, 
+STATUS VARCHAR2(20), 
+PRIMARY KEY(BOOK_ID),
+FOREIGN KEY(ISBN) REFERENCES BOOK(ISBN) ON DELETE CASCADE
+); 
+
+CREATE TABLE BORROW
+(
+BOOK_ID NUMBER,
+M_SSN NUMBER,
+ISSUED_BY NUMBER,
+ISSUE_DATE DATE,
+DUE_DATE DATE,
+RETURN_DATE DATE,
+GRACE_PERIOD DATE,
+STATUS VARCHAR2(20),
+PRIMARY KEY(BOOK_ID, M_SSN,ISSUE_DATE),
+FOREIGN KEY(BOOK_ID) REFERENCES COPY(BOOK_ID),
+FOREIGN KEY(M_SSN) REFERENCES MEMBER(SSN),
+FOREIGN KEY(ISSUED_BY) REFERENCES MEMBER(SSN)
+);
+
+
+CREATE TABLE VISITS
+(
+M_SSN NUMBER,
+CHECK_IN DATE,
+CHECK_OUT DATE,
+NAME VARCHAR2(50),
+PASS_ID NUMBER,
+VISITOR_TYPE VARCHAR2(50), /*Member, Relative, Guest*/
+VALIDITY_DATE DATE,
+PRIMARY KEY (M_SSN, CHECK_IN),
+FOREIGN KEY (M_SSN) REFERENCES MEMBER(SSN)
+);
+ 
+
